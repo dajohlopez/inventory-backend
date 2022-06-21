@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import com.company.inventory.dao.ICategoryDao;
 import com.company.inventory.model.Category;
@@ -94,6 +95,47 @@ public class CategoryServiceImpl implements ICategoryService{
 		} catch (Exception e) {
 			
 			response.setMetadata("Respuesta Bad", "-0", "Error al guardar categoría");
+			e.getStackTrace();
+			return new ResponseEntity<CategoryResponseRest>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+		return new ResponseEntity<CategoryResponseRest>(response, HttpStatus.OK);
+	}
+
+	@Override
+	@Transactional
+	public ResponseEntity<CategoryResponseRest> update(Category category, Long id) {
+		
+		CategoryResponseRest response = new CategoryResponseRest();
+		List<Category> list = new ArrayList<>();
+		
+		try {
+			
+			Optional<Category> categorySearch = categoryDao.findById(id);
+			if (categorySearch.isPresent()) {
+				// Se procede a actualizar el registro
+				categorySearch.get().setName(category.getName());
+				categorySearch.get().setDescription(category.getDescription());
+				Category categoryToUpdate = categoryDao.save(categorySearch.get());
+				
+				if (categoryToUpdate != null) {
+					list.add(categoryToUpdate);
+					response.getCategoryResponse().setCategory(list);
+					response.setMetadata("Respuesta OK", "00", "Categroría actualizada");
+				} else {
+					response.setMetadata("Sin Respuesta", "-1", "Categoría no actualizada");
+					return new ResponseEntity<CategoryResponseRest>(response, HttpStatus.BAD_REQUEST);
+				}
+				
+				
+			} else {
+				response.setMetadata("Sin Respuesta", "-0", "Categoría no encontrada");
+				return new ResponseEntity<CategoryResponseRest>(response, HttpStatus.NOT_FOUND);
+			}
+ 						
+		} catch (Exception e) {
+			
+			response.setMetadata("Respuesta Bad", "-0", "Error al actualizar categoría");
 			e.getStackTrace();
 			return new ResponseEntity<CategoryResponseRest>(response, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
